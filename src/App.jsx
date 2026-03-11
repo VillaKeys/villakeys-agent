@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/+esm";
 
 const SYSTEM_PROMPT = `You are Kaya, the friendly booking agent for Villa Keys — a unique collection of rustic, solar-powered log cabins tucked into a conservation area in Wilderness, Western Cape, South Africa.
 
@@ -218,17 +219,29 @@ export default function VillaKeysAgent() {
       const updated = [...next, { role: "assistant", content: reply }];
       setMessages(updated);
       const info = extractContact(updated);
-      if (info.email || info.phone) {
+     if (info.email || info.phone) {
         setLeads(prev => {
           if (prev.find(l => l.session === sessionId)) return prev;
-          return [...prev, {
+          const newLead = {
             session: sessionId,
             name: info.name || "Traveller",
             email: info.email,
             phone: info.phone,
             time: new Date().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" }),
             snippet: text.slice(0, 65) + "…",
-          }];
+          };
+          emailjs.send(
+            "service_xn2nmtj",
+            "template_vtseu69",
+            {
+              lead_name: newLead.name,
+              lead_email: newLead.email || "Not provided",
+              lead_phone: newLead.phone || "Not provided",
+              lead_message: text,
+            },
+            "R8ZNcEg6Mg6wwxBJv"
+          );
+          return [...prev, newLead];
         });
       }
     } catch {
